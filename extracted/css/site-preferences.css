@@ -1,0 +1,353 @@
+/* ==========================================================================
+   Site preferences — theme toggle + language switcher.
+   Built entirely on tokens already defined in style.css (--liquid-glass-*,
+   --accent*, --grad, --text, --muted) so it re-themes for free and matches
+   the existing glass-nav / liquid-nav visual language. Namespaced under
+   .pref-* — cannot collide with anything else on the page.
+
+   Two mount points:
+   - Inside the existing <nav class="glass-nav"> on index.html (the only
+     page that has a top nav) — .pref-controls sits directly in its flex row.
+   - A small standalone floating pill (.pref-bar) on services/blog/contact,
+     which have no top header at all — same internal markup, same visual
+     language, positioned where glass-nav would be so the controls live in
+     the same predictable spot on every page.
+   ========================================================================== */
+
+.pref-bar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pref-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- direct call button (shared: floating .pref-bar on subpages AND
+   the top .glass-nav on index.html both include this same component) -- */
+.call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--accent-4);
+  color: #04241f;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px -6px rgba(45, 212, 191, .55);
+  transition: transform .25s, box-shadow .25s, background .3s;
+}
+
+.call-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.call-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -6px rgba(45, 212, 191, .7);
+}
+
+@media (max-width: 520px) {
+  .call-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
+  .call-btn span { display: none; }
+}
+
+/* ---- header auth button (Login/Register — one button, one page) ------- */
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--grad);
+  color: #04122e;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px -6px rgba(93, 139, 255, .5);
+  transition: transform .25s, box-shadow .25s;
+}
+.auth-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -6px rgba(93, 139, 255, .65); }
+
+/* ---- floating call FAB (fixed bottom-right, above the footer, on every
+   page — deliberately a literal screen-right position, not RTL/LTR
+   "inset-inline-end", so it stays in the same corner in every language) */
+.call-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 96px;
+  z-index: 140;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-4);
+  color: #04241f;
+  box-shadow: 0 14px 30px -8px rgba(45, 212, 191, .6);
+  transition: transform .3s var(--ease-out-strong, cubic-bezier(.23,1,.32,1)), box-shadow .3s;
+  animation: fabPulseRing 2.6s ease-out infinite;
+}
+.call-fab svg { width: 24px; height: 24px; }
+.call-fab:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 18px 36px -8px rgba(45, 212, 191, .75); }
+.call-fab:active { transform: scale(.95); }
+
+@keyframes fabPulseRing {
+  0% { box-shadow: 0 14px 30px -8px rgba(45, 212, 191, .6), 0 0 0 0 rgba(45, 212, 191, .45); }
+  70% { box-shadow: 0 14px 30px -8px rgba(45, 212, 191, .6), 0 0 0 14px rgba(45, 212, 191, 0); }
+  100% { box-shadow: 0 14px 30px -8px rgba(45, 212, 191, .6), 0 0 0 0 rgba(45, 212, 191, 0); }
+}
+
+@media (max-width: 900px) {
+  /* Bottom liquid-nav is present on small screens — sit above it too. */
+  .call-fab { bottom: 108px; right: 16px; width: 50px; height: 50px; }
+  .call-fab svg { width: 21px; height: 21px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-fab { animation: none; }
+}
+
+/* ---- theme toggle -------------------------------------------------------- */
+.theme-toggle {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--liquid-glass-border);
+  background: var(--liquid-glass-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  transition: background .5s cubic-bezier(.22, 1, .36, 1), border-color .5s, transform .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.theme-toggle:hover {
+  background: var(--liquid-glass-bg-hover);
+  border-color: var(--liquid-glass-border-hover);
+}
+
+.theme-toggle:active {
+  transform: scale(.9);
+}
+
+.theme-toggle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(122, 240, 255, .5), transparent 70%);
+  opacity: 0;
+  z-index: -1;
+}
+
+.theme-toggle.is-flipping::before {
+  animation: theme-toggle-pulse .6s ease-out;
+}
+
+@keyframes theme-toggle-pulse {
+  0% {
+    opacity: .8;
+    transform: scale(.4);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.theme-toggle__icon {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  transition: opacity .45s cubic-bezier(.22, 1, .36, 1), transform .5s cubic-bezier(.22, 1, .36, 1);
+}
+
+.theme-toggle__icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-toggle__icon--moon {
+  color: var(--accent-2);
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle__icon--sun {
+  color: #ffb84d;
+  opacity: 0;
+  transform: rotate(-90deg) scale(.4);
+}
+
+[data-theme="light"] .theme-toggle__icon--moon {
+  opacity: 0;
+  transform: rotate(90deg) scale(.4);
+}
+
+[data-theme="light"] .theme-toggle__icon--sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* ---- language switch ------------------------------------------------------ */
+.lang-switch {
+  position: relative;
+}
+
+.lang-switch__trigger {
+  height: 38px;
+  padding-inline: 12px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--liquid-glass-border);
+  background: var(--liquid-glass-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  transition: background .5s cubic-bezier(.22, 1, .36, 1), border-color .5s;
+}
+
+.lang-switch__trigger:hover,
+.lang-switch.is-open .lang-switch__trigger {
+  background: var(--liquid-glass-bg-hover);
+  border-color: var(--liquid-glass-border-hover);
+}
+
+.lang-switch__chevron {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .35s cubic-bezier(.22, 1, .36, 1);
+}
+
+.lang-switch.is-open .lang-switch__chevron {
+  transform: rotate(180deg);
+}
+
+.lang-switch__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  inset-inline-end: 0;
+  min-width: 148px;
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--liquid-glass-bg-hover);
+  border: 1px solid var(--liquid-glass-border);
+  backdrop-filter: blur(var(--liquid-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--liquid-glass-blur)) saturate(160%);
+  box-shadow: 0 20px 50px -18px rgba(0, 0, 0, .5), inset 0 1px 0 var(--liquid-glass-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform-origin: top center;
+  opacity: 0;
+  transform: translateY(-8px) scale(.94);
+  pointer-events: none;
+  transition: opacity .28s cubic-bezier(.22, 1, .36, 1), transform .32s cubic-bezier(.22, 1, .36, 1);
+}
+
+.lang-switch.is-open .lang-switch__menu {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.lang-switch__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease;
+}
+
+.lang-switch__option:hover {
+  background: var(--glass);
+  color: var(--text);
+}
+
+.lang-switch__option.is-active {
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(122, 240, 255, .16), rgba(157, 107, 255, .12));
+}
+
+.lang-switch__option svg {
+  width: 15px;
+  height: 15px;
+  stroke: var(--accent-2);
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity .2s ease;
+}
+
+.lang-switch__option.is-active svg {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .pref-bar {
+    top: 14px;
+  }
+
+  .lang-switch__trigger {
+    padding-inline: 10px 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .theme-toggle,
+  .theme-toggle__icon,
+  .theme-toggle::before,
+  .lang-switch__chevron,
+  .lang-switch__menu {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}

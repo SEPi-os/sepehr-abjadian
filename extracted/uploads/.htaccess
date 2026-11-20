@@ -1,0 +1,22 @@
+# upload_image() in includes/functions.php already whitelists real image
+# MIME types and writes random filenames, so there is no live path to get
+# a .php file in here today — this is belt-and-suspenders in case that
+# ever changes: nothing in this folder is ever allowed to execute.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|pl|py|cgi|sh|asp|aspx)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+Options -Indexes -ExecCGI

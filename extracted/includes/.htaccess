@@ -1,0 +1,9 @@
+# These files are only ever require_once'd by other PHP files — nobody
+# should be requesting includes/config.php etc. directly over HTTP.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

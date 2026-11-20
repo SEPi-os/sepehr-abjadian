@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /includes/
+Disallow: /account
+Disallow: /dashboard
+Disallow: /cart
+Disallow: /checkout
+Disallow: /payment
+Disallow: /download
+Disallow: /storage/
+Disallow: /database/
+
+Sitemap: https://abjadian.ir/sitemap.xml

@@ -1,0 +1,117 @@
+# =====================================================================
+# Security hardening — added by security audit, does not change any
+# routing, page, or PHP behavior. Apache 2.2/2.4 compatible.
+# If your host runs Nginx instead of Apache, this file has no effect —
+# ask your host for the Nginx-equivalent server block (see
+# SECURITY_CHANGES.md for the exact snippet to hand them).
+# =====================================================================
+
+# ---- Security headers ------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://www.google.com; frame-src https://www.youtube.com https://www.aparat.com https://www.google.com/recaptcha/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+    # HSTS only when the request actually arrived over HTTPS, so this
+    # can never break local HTTP testing or a not-yet-HTTPS deployment.
+    SetEnvIf HTTPS on secure_request
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=secure_request
+</IfModule>
+
+# ---- Block direct access to backups / dumps / internal docs ----------
+<FilesMatch "\.(sql|md|bak|old|log|env|ini|gz|tar|zip|config)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ---- No directory listings --------------------------------------------
+Options -Indexes -MultiViews
+
+# =====================================================================
+# SEO: canonical host + clean URLs
+# Everything below is additive — the .php files still exist and still
+# work exactly as before; this layer just gives them clean public URLs
+# and 301s the old ones so nothing indexed under the old paths breaks.
+# =====================================================================
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# ---- 1) Canonical host: force https://abjadian.ir (no www, not the
+# old vercel.app deployment domain). Scoped to known old hosts rather
+# than "anything that isn't abjadian.ir" so local/dev testing by IP or
+# localhost is never caught in a redirect loop.
+RewriteCond %{HTTP_HOST} ^(www\.abjadian\.ir|abjadian\.vercel\.app)$ [NC]
+RewriteRule ^ https://abjadian.ir%{REQUEST_URI} [R=301,L]
+
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} ^abjadian\.ir$ [NC]
+RewriteRule ^ https://abjadian.ir%{REQUEST_URI} [R=301,L]
+
+# ---- 2) Old .php URLs -> new clean URLs (301, permanent, one hop)
+RewriteRule ^index\.php$ / [R=301,L]
+RewriteRule ^portfolio\.php$ /portfolio [R=301,L]
+RewriteRule ^services\.php$ /services [R=301,L]
+RewriteRule ^blog\.php$ /blog [R=301,L]
+RewriteRule ^contact\.php$ /contact [R=301,L]
+RewriteRule ^account\.php$ /account [R=301,L]
+RewriteRule ^dashboard\.php$ /dashboard [R=301,L]
+RewriteCond %{QUERY_STRING} ^slug=([a-zA-Z0-9-]+)$
+RewriteRule ^blog-post\.php$ /blog/%1? [R=301,L]
+# Store: old .php entry points -> clean URLs
+RewriteRule ^shop\.php$ /shop [R=301,L]
+RewriteRule ^cart\.php$ /cart [R=301,L]
+RewriteRule ^checkout\.php$ /checkout [R=301,L]
+RewriteRule ^orders\.php$ /dashboard/orders [R=301,L]
+RewriteRule ^purchases\.php$ /dashboard/purchases [R=301,L]
+RewriteRule ^my-reviews\.php$ /dashboard/reviews [R=301,L]
+RewriteCond %{QUERY_STRING} ^slug=([a-zA-Z0-9-]+)$
+RewriteRule ^shop-product\.php$ /shop/%1? [R=301,L]
+RewriteCond %{QUERY_STRING} ^slug=([a-zA-Z0-9-]+)$
+RewriteRule ^shop-category\.php$ /shop/category/%1? [R=301,L]
+
+# ---- 3) Trailing-slash policy: no trailing slash (except the root /)
+RewriteCond %{REQUEST_URI} !^/$
+RewriteCond %{REQUEST_URI} ^(.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+# ---- 4) Clean URL -> real file (internal rewrite, browser URL stays
+# clean, .php is never exposed). [END] (not just L) so mod_rewrite does
+# NOT restart the ruleset from the top on the rewritten path — without
+# it, e.g. /portfolio -> portfolio.php would then re-match rule #2's
+# "portfolio.php -> /portfolio" redirect and turn into a visible 301
+# instead of quietly serving the file.
+RewriteRule ^portfolio$ portfolio.php [END]
+RewriteRule ^services$ services.php [END]
+RewriteRule ^blog$ blog.php [END]
+RewriteRule ^contact$ contact.php [END]
+RewriteRule ^account$ account.php [END]
+RewriteRule ^dashboard$ dashboard.php [END]
+RewriteRule ^blog/([a-zA-Z0-9-]+)$ blog-post.php?slug=$1 [QSA,END]
+RewriteRule ^projects/([a-zA-Z0-9-]+)$ project.php?slug=$1 [QSA,END]
+
+# ---- Store routes (clean URL -> real file, same [END] reasoning as above)
+RewriteRule ^sitemap\.xml$ sitemap.php [END]
+RewriteRule ^shop$ shop.php [END]
+RewriteRule ^shop/category/([a-zA-Z0-9-]+)$ shop-category.php?slug=$1 [QSA,END]
+RewriteRule ^shop/([a-zA-Z0-9-]+)$ shop-product.php?slug=$1 [QSA,END]
+RewriteRule ^cart$ cart.php [END]
+RewriteRule ^checkout$ checkout.php [END]
+RewriteRule ^payment/start/([A-Za-z0-9-]+)$ payment-start.php?order=$1 [QSA,END]
+RewriteRule ^payment/callback/([a-z0-9_]+)$ payment-callback.php?gateway=$1 [QSA,END]
+RewriteRule ^payment/(success|failed)/([A-Za-z0-9-]+)$ payment-result.php?r=$1&order=$2 [QSA,END]
+RewriteRule ^dashboard/orders$ orders.php [END]
+RewriteRule ^dashboard/orders/([A-Za-z0-9-]+)$ order.php?number=$1 [QSA,END]
+RewriteRule ^dashboard/purchases$ purchases.php [END]
+RewriteRule ^dashboard/reviews$ my-reviews.php [END]
+RewriteRule ^download/([0-9]+)/([0-9]+)$ download.php?e=$1&f=$2 [QSA,END]
+
+# ---- 5) Unknown URLs get a real 404, not the homepage
+ErrorDocument 404 /404.php
+</IfModule>

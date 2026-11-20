@@ -1,0 +1,64 @@
+.contact-layout{
+  display:grid; grid-template-columns:1.1fr .8fr; gap:28px;
+  align-items:start;
+}
+@media (max-width:900px){ .contact-layout{ grid-template-columns:1fr; } }
+
+/* ---- form ------------------------------------------------------------------ */
+.contact-form{ padding:38px; }
+.contact-form__grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.contact-form__grid .field--full{ grid-column:1 / -1; }
+@media (max-width:560px){ .contact-form__grid{ grid-template-columns:1fr; } }
+.contact-form .cta-btn{ margin-top:22px; width:100%; justify-content:center; border:none; cursor:pointer; font-family:inherit; font-size:15px; }
+
+/* Honeypot: kept in the DOM and in the tab order's blind spot (not
+   display:none, which some bots specifically skip) but invisible and
+   unreachable for a real visitor. */
+.field--honeypot{
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap;
+}
+
+.contact-form__server-error{
+  display:none; color:#ff8fa3; font-size:13px; text-align:center; margin-top:14px;
+}
+.contact-form__server-error.is-visible{ display:block; }
+
+.contact-form__success{
+  display:none;
+  flex-direction:column; align-items:center; text-align:center;
+  padding:40px 10px; gap:14px;
+}
+.contact-form.is-sent form{ display:none; }
+.contact-form.is-sent .contact-form__success{ display:flex; }
+.contact-form__success svg{
+  width:56px; height:56px; stroke:var(--accent-4); fill:none; stroke-width:1.6;
+  animation: cf-pop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.contact-form__success h3{ font-size:20px; font-weight:800; }
+.contact-form__success p{ color:var(--muted); font-size:14.5px; max-width:320px; line-height:1.8; }
+@keyframes cf-pop{ from{ transform:scale(.6); opacity:0; } to{ transform:scale(1); opacity:1; } }
+
+/* ---- side cards -------------------------------------------------------------- */
+.contact-cards{ display:flex; flex-direction:column; gap:14px; }
+.contact-card{
+  display:flex; align-items:center; gap:16px;
+  padding:20px 22px;
+  text-decoration:none;
+}
+.contact-card__icon{
+  flex-shrink:0; width:44px; height:44px; border-radius:13px;
+  display:grid; place-items:center;
+  background:var(--liquid-glass-bg-hover); border:1px solid var(--glass-border);
+}
+.contact-card__icon svg{ width:20px; height:20px; stroke:var(--accent-2); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.contact-card__text span{ display:block; }
+.contact-card__label{ font-size:12.5px; color:var(--muted); margin-bottom:2px; }
+.contact-card__value{ font-size:15px; font-weight:700; color:var(--text); }
+.contact-card.is-pending{ opacity:.55; }
+.contact-card.is-pending .contact-card__value{ font-weight:600; font-size:13.5px; }
+
+.location-card{ padding:22px; display:flex; align-items:center; gap:16px; }
+.location-card svg{ width:22px; height:22px; stroke:var(--accent-3); fill:none; stroke-width:1.8; flex-shrink:0; }
+.location-card p{ font-size:14.5px; color:var(--muted); }
+.location-card strong{ color:var(--text); display:block; margin-bottom:2px; }
